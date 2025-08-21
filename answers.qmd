@@ -1,0 +1,339 @@
+---
+title: "Amounts and proportions"
+subtitle: "Exercise 4 --- PMAP 8551/4551, SEMESTER YEAR"
+author: "YOUR NAME HERE"
+date: "DATE GOES HERE"
+date-format: "long"
+format:
+  html:
+    toc: true
+    knitr:
+      opts_chunk: 
+        dev: "ragg_png"
+        dpi: 300
+  typst:
+    toc: true
+    include-before-body: 
+      text: |
+        #show link: set text(fill: rgb("e16462"))
+
+        // Keep track of previous heading levels
+        #let last-heading-level = state("last-heading-level", 0)
+
+        // Add page breaks before all level 1 headings
+        // Add page breaks before level 2 headings that don't come after level 1
+        #show heading: it => {
+          context {
+            let prev-level = last-heading-level.get()
+
+            if it.level == 1 {
+              pagebreak(weak: true)
+              last-heading-level.update(1)
+            } else if it.level == 2 {
+              if prev-level != 1 {
+                pagebreak(weak: true)
+              }
+              last-heading-level.update(2)
+            } else {
+              last-heading-level.update(it.level)
+            }
+          }
+          it
+        }
+  pdf:
+    toc: true
+  docx:
+    toc: true
+---
+
+# Task 1: Session check-in
+
+::: {.callout-tip title="Answer"}
+Hopefully you wrote some interesting and muddy things!
+:::
+
+
+# Task 2: Long Beach Animal Shelter
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+# Load libraries here
+library(tidyverse)
+```
+
+## Data description and cleaning
+
+This data comes from the [City of Long Beach Animal Care Services](https://www.longbeach.gov/acs/) via the [{animalshelter}](https://emilhvitfeldt.github.io/animalshelter/) R package (and it was a [#TidyTuesday dataset in March 2025](https://github.com/rfordatascience/tidytuesday/blob/main/data/2025/2025-03-04/readme.md)).
+
+There are 22 columns, and [they're documented here](https://github.com/rfordatascience/tidytuesday/blob/main/data/2025/2025-03-04/readme.md#data-dictionary)---make sure you consult that page!
+
+The code below loads and cleans the data, mostly by filtering it to include the most common types of animals, intake types, and outcome types. **You don't need to modify anything in this chunk of code---you only need to run it.**
+
+```{r}
+#| label: load-clean-data
+#| warning: false
+#| message: false
+
+# Load the full data
+animals_raw <- read_csv("data/animals.csv")
+
+animals <- animals_raw |> 
+  # Only keep the most common animals, intake types, and outcome types
+  filter(animal_type %in% c("bird", "cat", "dog", "wild", "other")) |>
+  filter(intake_type %in% c("owner surrender", "stray", "wildlife")) |>
+  filter(
+    outcome_type %in%
+      c("outcome_type", "rescue", "adoption", "euthanasia", "transfer",
+        "return to owner", "shelter, neuter, return", "died",
+        "community cat", "return to wild habitat")
+  ) |>
+  # Add columns for the year and month
+  mutate(
+    intake_year = year(intake_date),
+    intake_month = month(intake_date, label = TRUE, abbr = FALSE)
+  ) |> 
+  mutate(
+    across(c(animal_type, intake_type, outcome_type), 
+    \(x) str_to_title(x))
+  )
+```
+
+
+## Animal type
+
+What are the most common type of animals seen by the shelter?
+
+### Recreate data summary
+
+Right now there's a row for each animal visit. We need to condense that down to get counts of different types of variables. We can do this by using `group_by()` and `summarize()`.
+
+Use `group_by()` and `summarize()` to create a data frame named `animal_counts` that looks like this (hint---in `summarize()`, you'll want to use the `n()` function to calculate the number of rows in each group):
+
+```{r}
+#| label: recreate-me-data-1
+#| echo: false
+#| ref.label: recreation-data-1
+```
+
+::: {.callout-tip title="Answer"}
+
+```{r}
+#| label: recreation-data-1
+
+animal_counts <- animals |> 
+  group_by(animal_type) |> 
+  summarize(total = n())
+animal_counts
+```
+
+:::
+
+### Recreate bar plot
+
+Run the code chunk below to see a plot.
+
+```{r fig.path="images/"}
+#| label: recreate-me-1
+#| echo: false
+#| ref.label: recreation-plot-1
+```
+
+Use `ggplot()` and `geom_col()` in the chunk below to re-create the plot above using the `animal_counts` dataset. (*note*---the bars are filled, but there's no legend)
+
+::: {.callout-tip title="Answer"}
+
+```{r}
+#| label: recreation-plot-1
+
+ggplot(animal_counts, aes(x = animal_type, y = total, fill = animal_type)) +
+  geom_col() +
+  guides(fill = "none")
+```
+
+:::
+
+## Outcomes
+
+What are the most common types of outcomes for animals taken to the shelter? What proportion are adopted or rescued?
+
+### Recreate data summary
+
+Use `group_by()` and `summarize()` and `mutate()` to create a data frame named `outcome_props` that looks like this (hint---that proportion column is calculated like `total / sum(total)`):
+
+```{r}
+#| label: recreate-me-data-2
+#| echo: false
+#| message: false
+#| ref.label: recreation-data-2
+```
+
+::: {.callout-tip title="Answer"}
+
+```{r}
+#| label: recreation-data-2
+#| message: false
+
+outcome_props <- animals |> 
+  group_by(outcome_type) |> 
+  summarize(total = n()) |> 
+  mutate(proportion = total / sum(total))
+outcome_props
+```
+
+:::
+
+### Recreate lollipop plot
+
+Run the code chunk below to see a plot.
+
+```{r fig.path="images/"}
+#| label: recreate-me-2
+#| echo: false
+#| ref.label: recreation-plot-2
+#| message: false
+```
+
+Use `ggplot()` and `geom_pointrange()` in the chunk below to re-create the plot above using the `outcome_props` dataset.
+
+::: {.callout-tip title="Answer"}
+
+```{r}
+#| label: recreation-plot-2
+#| message: false
+
+ggplot(outcome_props, aes(x = proportion, y = outcome_type)) +
+  geom_pointrange(aes(xmin = 0, xmax = proportion))
+```
+
+:::
+
+Currently the outcome types are sorted alphabetically, which isn't super helpful. Sort them by proportion and recreate the plot below.
+
+```{r fig.path="images/"}
+#| label: recreate-me-3
+#| echo: false
+#| ref.label: recreation-plot-3
+#| message: false
+```
+
+*Big hint!* Add this to the end of the code to make `outcome_props` to order `outcome_type` by the proportion column:
+
+```r
+CODE_FOR_OUTCOME_PROPS |> 
+  mutate(outcome_type = fct_reorder(outcome_type, proportion))
+```
+
+::: {.callout-tip title="Answer"}
+
+```{r}
+#| label: recreation-plot-3
+#| message: false
+
+outcome_props_sorted <- outcome_props |> 
+  mutate(outcome_type = fct_reorder(outcome_type, proportion))
+
+ggplot(outcome_props_sorted, aes(x = proportion, y = outcome_type)) +
+  geom_pointrange(aes(xmin = 0, xmax = proportion))
+```
+
+:::
+
+## Intake type over time
+
+Are there seasonal patterns in the types of animal intake at the shelter?
+
+### Recreate data summary
+
+Use `group_by()` and `summarize()` and `mutate()` to create a data frame named `month_intake_props` that looks like the output below.
+
+You'll need to group by two variables to make the summary. IMPORTANTLY you'll also need to add another `group_by()` in between `summarize()` and `mutate()`, otherwise, R will calculate percentages in unexpected groups.
+
+If you want the percentages of months to add up to 100% in each intake type (i.e. the percent of adoptions in January, February, March, etc.), you'll want to group by `intake_type` before calculating the proportion; if you want the percentages of intake types to add up to 100% in each month (i.e. the percent of all different intake types in January), you'll want to group by `intake_month` before calculating the proportion.
+
+```{r}
+#| label: recreate-me-data-4
+#| echo: false
+#| message: false
+#| ref.label: recreation-data-4
+```
+
+::: {.callout-tip title="Answer"}
+
+```{r}
+#| label: recreation-data-4
+#| message: false
+
+month_intake_props <- animals |> 
+  group_by(intake_type, intake_month) |> 
+  summarize(total = n()) |> 
+  group_by(intake_type) |> 
+  mutate(proportion = total / sum(total))
+month_intake_props
+```
+
+:::
+
+### Recreate heatmap
+
+Run the code chunk below to see a plot.
+
+```{r fig.path="images/"}
+#| label: recreate-me-4
+#| echo: false
+#| ref.label: recreation-plot-4
+#| message: false
+```
+
+Use `ggplot()` and `geom_tile()` in the chunk below to re-create the plot above using the `outcome_props` dataset.
+
+*Hint*: By default, the months will appear reversed, with January at the bottom and December at the top. Use `y = fct_rev(intake_month)` to reverse them.
+
+::: {.callout-tip title="Answer"}
+
+```{r}
+#| label: recreation-plot-4
+#| message: false
+
+ggplot(
+  month_intake_props,
+  aes(x = intake_type, y = fct_rev(intake_month), fill = proportion)
+) +
+  geom_tile()
+```
+
+:::
+
+# Task 3: Extension
+
+Copy the code for one of your plots above and paste it into the chunk below. Do some extra things to it, like changing the labels, changing the colors, adding a new geom, plotting a different variable from the dataset (there are lots of them!), changing the theme, or whatever. **This is your chance to play around and explore.**
+
+::: {.callout-tip title="Answer"}
+
+Hopefully you did something neat! Here's something I did with the heatmap:
+
+```{r}
+#| label: extension
+#| message: false
+#| warning: false
+
+library(scales)  # For better labels, like label_percent()
+
+ggplot(
+  month_intake_props,
+  aes(x = intake_type, y = fct_rev(intake_month), fill = proportion)
+) +
+  geom_tile() +
+  scale_fill_viridis_c(option = "plasma", labels = label_percent()) +
+  labs(
+    x = "Intake type",
+    y = NULL,
+    fill = "Proportion per month\nfor each intake type",
+    title = "Wildlife and strays most common\nin spring and summer"
+  ) +
+  theme_minimal()
+```
+
+:::
