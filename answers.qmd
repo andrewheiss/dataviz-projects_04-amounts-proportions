@@ -13,9 +13,23 @@ format:
         dpi: 300
   typst:
     toc: true
+    toc-title: Contents
+    output-file: PREFIX_04-exercise.pdf
+    pdf-standard: ua-1
+    callout-appearance: minimal
+    include-in-header: 
+      text: |
+        // TOC stuff
+        // Make the title centered and slightly smaller than a full heading
+        #show outline: it => {
+          show heading: it => align(center, text(size: 0.75em, it))
+          it
+        }
     include-before-body: 
       text: |
-        #show link: set text(fill: rgb("e16462"))
+        // Color links with purple from viridis plasma: 
+        // viridisLite::viridis(8, option = "plasma", begin = 0.1, end = 0.9)[3]
+        #show link: set text(fill: rgb("9a169f"))
 
         // Keep track of previous heading levels
         #let last-heading-level = state("last-heading-level", 0)
@@ -139,6 +153,7 @@ Run the code chunk below to see a plot.
 #| label: recreate-me-1
 #| echo: false
 #| ref.label: recreation-plot-1
+#| opts.label: true
 ```
 
 Use `ggplot()` and `geom_col()` in the chunk below to re-create the plot above using the `animal_counts` dataset. (*note*---the bars are filled, but there's no legend)
@@ -147,6 +162,12 @@ Use `ggplot()` and `geom_col()` in the chunk below to re-create the plot above u
 
 ```{r}
 #| label: recreation-plot-1
+#| fig-alt: |
+#|   Bar chart of animal counts by type at the Long Beach Animal Shelter.
+#|   Animal types (Bird, Cat, Dog, Other, Wild) on the x-axis, total visit
+#|   count on the y-axis, each bar filled with a distinct color but no legend.
+#|   Dogs and cats account for the large majority of shelter animals, while
+#|   birds and wild animals are far less frequent.
 
 ggplot(animal_counts, aes(x = animal_type, y = total, fill = animal_type)) +
   geom_col() +
@@ -194,6 +215,7 @@ Run the code chunk below to see a plot.
 #| echo: false
 #| ref.label: recreation-plot-2
 #| message: false
+#| opts.label: true
 ```
 
 Use `ggplot()` and `geom_pointrange()` in the chunk below to re-create the plot above using the `outcome_props` dataset.
@@ -203,6 +225,12 @@ Use `ggplot()` and `geom_pointrange()` in the chunk below to re-create the plot 
 ```{r}
 #| label: recreation-plot-2
 #| message: false
+#| fig-alt: |
+#|   Lollipop chart of shelter animal outcome proportions. Outcome types on
+#|   the y-axis in alphabetical order, proportion of all outcomes on the
+#|   x-axis. Transfer, rescue, euthanasia and adoption are among the most common 
+#|   outcomes; died and return to wild habitat are the least frequent. The
+#|   alphabetical ordering makes comparing across types difficult.
 
 ggplot(outcome_props, aes(x = proportion, y = outcome_type)) +
   geom_pointrange(aes(xmin = 0, xmax = proportion))
@@ -217,6 +245,7 @@ Currently the outcome types are sorted alphabetically, which isn't super helpful
 #| echo: false
 #| ref.label: recreation-plot-3
 #| message: false
+#| opts.label: true
 ```
 
 *Big hint!* Add this to the end of the code to make `outcome_props` to order `outcome_type` by the proportion column:
@@ -231,6 +260,12 @@ CODE_FOR_OUTCOME_PROPS |>
 ```{r}
 #| label: recreation-plot-3
 #| message: false
+#| fig-alt: |
+#|   Lollipop chart of shelter animal outcome proportions, sorted from least
+#|   to most common. Outcome types on the y-axis ordered by ascending
+#|   proportion, proportion of all outcomes on the x-axis. Sorting by
+#|   proportion makes it immediately clear which outcomes are most and least
+#|   frequent.
 
 outcome_props_sorted <- outcome_props |> 
   mutate(outcome_type = fct_reorder(outcome_type, proportion))
@@ -285,6 +320,7 @@ Run the code chunk below to see a plot.
 #| echo: false
 #| ref.label: recreation-plot-4
 #| message: false
+#| opts.label: true
 ```
 
 Use `ggplot()` and `geom_tile()` in the chunk below to re-create the plot above using the `outcome_props` dataset.
@@ -296,6 +332,13 @@ Use `ggplot()` and `geom_tile()` in the chunk below to re-create the plot above 
 ```{r}
 #| label: recreation-plot-4
 #| message: false
+#| fig-alt: |
+#|   Tile heatmap of animal intake proportions by month and intake type.
+#|   Three intake types (Owner Surrender, Stray, Wildlife) on the x-axis,
+#|   months (January at top through December at bottom) on the y-axis. Color
+#|   encodes the proportion of annual intake occurring in each month for each
+#|   intake type. Stray and wildlife intakes concentrate in spring and summer;
+#|   owner surrenders are more evenly spread throughout the year.
 
 ggplot(
   month_intake_props,
@@ -318,6 +361,13 @@ Hopefully you did something neat! Here's something I did with the heatmap:
 #| label: extension
 #| message: false
 #| warning: false
+#| fig-alt: |
+#|   Tile heatmap of animal intake proportions by month and intake type,
+#|   styled with the plasma color scale and percent-formatted legend. Three
+#|   intake types on the x-axis, months (January at top) on the y-axis.
+#|   Bright yellow-orange cells highlight that wildlife and stray intakes
+#|   spike strongly in spring and summer, supporting the title "Wildlife and
+#|   strays most common in spring and summer."
 
 library(scales)  # For better labels, like label_percent()
 
